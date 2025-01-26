@@ -8,6 +8,7 @@ import java.util.Scanner;
 
 public class App {
     public static void main(String[] args) throws Exception {
+
         Set<String> flavors = new HashSet<>();
         flavors.add("Chocolate");
         flavors.add("Vanilla");
@@ -25,16 +26,13 @@ public class App {
 
         Map<String, Integer> votes = new HashMap<>();
 
+        Map<String, String> displayFlavors = new HashMap<>();
+
         Scanner scanner = new Scanner(System.in);
 
-        for (String flavor : flavors) {
-            votes.put(flavor, 0);
-        }
+        initializeVotes(flavors, votes, displayFlavors);
 
-        System.out.println("Let's vote on ice cream flavors. Here are your options:");
-        for (String flavor : flavors) {
-            System.out.println(flavor);
-        }
+        displayFlavorOptions(flavors);
 
         boolean allVotesValid = false;
 
@@ -42,39 +40,65 @@ public class App {
             allVotesValid = true;
 
             for (String name : names) {
-                String userVote = "";
-                boolean validVote = false;
+                String userVote = collectVote(name, flavors, scanner);
 
-                while (!validVote) {
-                    System.out.println("Which flavor do you want to vote for, " + name + "?");
-                    userVote = scanner.nextLine();
-                    userVote = userVote.trim();
-
-                    boolean validFlavor = false;
-                    for (String flavor : flavors) {
-                        if (flavor.equalsIgnoreCase(userVote)) {
-                            validFlavor = true;
-                            break;
-                        }
-                    }
-
-                    if (validFlavor) {
-                        String normalizedVote = userVote.toLowerCase();
-                        for (String flavor : flavors) {
-                            if (flavor.equalsIgnoreCase(userVote)) {
-                                votes.put(flavor, votes.getOrDefault(flavor, 0) + 1);
-                                System.out.println("Thank you for your vote, " + name + "!");
-                                validVote = true;
-                                break;
-                            }
-                        }
-                    } else {
-                        System.out.println("That is not a valid flavor. Please try again.");
-                        allVotesValid = false;
-                    }
+                if (userVote != null) {
+                    String lowercaseVote = userVote.toLowerCase();
+                    votes.put(lowercaseVote, votes.getOrDefault(lowercaseVote, 0) + 1);
+                    System.out.println("Thank you for your vote, " + name + "!");
+                } else {
+                    allVotesValid = false;
                 }
             }
         }
+        displayWinner(votes, displayFlavors);
+        scanner.close();
+    }
+
+    private static void initializeVotes(Set<String> flavors, Map<String, Integer> votes,
+            Map<String, String> displayFlavors) {
+        for (String flavor : flavors) {
+            String lowercaseFlavor = flavor.toLowerCase();
+            votes.put(lowercaseFlavor, 0);
+            displayFlavors.put(lowercaseFlavor, flavor); // store the original flavor name for display purposes
+        }
+    }
+
+    private static void displayFlavorOptions(Set<String> flavors) {
+        System.out.println("Let's vote on ice cream flavors. Here are your options:");
+        for (String flavor : flavors) {
+            System.out.println(flavor);
+        }
+    }
+
+    private static String collectVote(String name, Set<String> flavors, Scanner scanner) {
+        String userVote = "";
+        boolean validVote = false;
+
+        while (!validVote) {
+            System.out.println("Which flavor do you want to vote for, " + name + "?");
+            userVote = scanner.nextLine().trim();
+
+            if (isValidFlavor(userVote, flavors)) {
+                validVote = true;
+            } else {
+                System.out.println("That is not a valid flavor. Please try again.");
+            }
+        }
+        return userVote;
+    }
+
+    private static boolean isValidFlavor(String userVote, Set<String> flavors) {
+        for (String flavor : flavors) {
+            if (flavor.equalsIgnoreCase(userVote)) { // string class method that compares two strings ignoring case
+                                                     // differences
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void displayWinner(Map<String, Integer> votes, Map<String, String> displayFlavors) {
         int maxVotes = 0;
         for (int voteCount : votes.values()) {
             if (voteCount > maxVotes) {
@@ -82,11 +106,20 @@ public class App {
             }
         }
         System.out.println("\nThe flavor(s) with the most votes are:");
-        for (Map.Entry<String, Integer> entry : votes.entrySet()) {
+        for (Map.Entry<String, Integer> entry : votes.entrySet()) { // entry set method returns a set of all the entires
+                                                                    // in the map
             if (entry.getValue() == maxVotes) {
-                System.out.println(entry.getKey() + ": " + entry.getValue() + " votes");
+                String originalFlavorName = displayFlavors.get(entry.getKey()); // get the original flavor name
+                System.out.println(originalFlavorName + ": " + entry.getValue() + " votes");
             }
         }
-        scanner.close();
     }
 }
+
+// One of the biggest differences I noticed between Java and C# is the built-in
+// string formatting methods. In C#, string formatting can be done using methods
+// like Console.WriteLine()
+// and interpolation, whereas in Java, you use System.out.println() with
+// concatenation. Java also has built-in string formatting methods that I was
+// unfamilar with that C# does not
+// have, such as "string.equalsIgnoreCase".
